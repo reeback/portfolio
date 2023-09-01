@@ -5,5 +5,559 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
   </head>
-  <body></body>
+  <body>
+    <script>
+      // If widnow is not active the timer stops.
+      var framesPass = 0; // Number of frames that have already passed.
+      var gameSec = 0; // Number of seconds that have already passed.
+      function gameTimer() {
+        // It is called inside function animation()
+        framesPass++;
+        score = Math.round(score + 1 /**speed*/);
+        if (framesPass % 60 == 0) {
+          // Every 60 frames it adds 1 second to the timer.
+          gameSec++;
+          document.title = "Grave Ride (" + gameSec + " sec)";
+          oneSecond(); // Every 60 frames this function is called.
+        }
+      }
+      var start = 0;
+      var score = 1;
+      var speed = 1; // Static beggining value.
+      var speedUp = 0.07; // Value that game is spedding up every second.
+      var randomNumber = 1;
+      var miss = 0;
+
+      function oneSecond() {
+        // Function called every 60 frames.
+        if (gameSec % 1 == 0) {
+          // For example if I want that week take 1 in-game seconds.
+          speed = Math.round(100 * (speed + speedUp)) / 100;
+        }
+        if (gameSec % 2 == 0) {
+          makeHole();
+          makeSkeleton();
+        }
+      }
+
+      // 0 == 100%, 1 == 50%, 3 == 25%...
+      levelArray = new Array();
+      levelArray.push({ h: 0, s: 0, g: 0 }); // Level 0
+      levelArray.push({ h: 1, s: 0, g: 0 }); // Level 1 +
+      levelArray.push({ h: 0, s: 1, g: 0 }); // Level 2 +
+      levelArray.push({ h: 0, s: 0, g: 1 }); // Level 3 +
+      levelArray.push({ h: 1, s: 1, g: 0 }); // Level 4 ++
+      levelArray.push({ h: 1, s: 0, g: 1 }); // Level 5 ++
+      levelArray.push({ h: 0, s: 1, g: 1 }); // Level 6 ++
+      levelArray.push({ h: 1, s: 1, g: 1 }); // Level 7 +++
+
+      function makeHole() {
+        if (levelArray[level]) {
+          randomNumber = Math.round(Math.random() * levelArray[level].h);
+          //console.log('hole: ' + randomNumber);
+        }
+        if (randomNumber == 0) {
+          // if randomNumber == 0 hole appears
+          holeArray.push({ x: 1000 * speed });
+        }
+      }
+      function makeSkeleton() {
+        if (levelArray[level]) {
+          randomNumber = Math.round(Math.random() * levelArray[level].s);
+          //console.log('skeleton: ' + randomNumber);
+        }
+        if (randomNumber == 0) {
+          // if randomNumber == 0 skeleton appears
+          skeletonArray.push({ x: 1350 * speed });
+        }
+      }
+      function killSkeleton() {
+        if (levelArray[level]) {
+          randomNumber = Math.round(Math.random() * levelArray[level].g);
+          //console.log('gun: ' + randomNumber);
+        }
+        if (randomNumber == 0) {
+          // if randomNumber == 0 skeleton will get hit
+          if (skeletonArray[0].x < 960) {
+            coinArray.push({ x: skeletonArray[0].x });
+            skeletonArray.splice(0, 1);
+          }
+        }
+        if (randomNumber == 1) {
+          // if randomNumber == 1 skeleton will NOT get hit
+          missSkeleton();
+        }
+      }
+
+      function missSkeleton() {
+        miss = 1;
+      }
+      function collectCoin() {
+        coinArray.splice(i, 1);
+        score += 60;
+        var coinSound = document.getElementsByTagName("audio")[2];
+        if (coinSound.paused) {
+          coinSound.play();
+        }
+      }
+
+      function newGame() {
+        jumpFrame = 0;
+        shotFrame = 0;
+        reloading = 0;
+        skaterSTATE = 1;
+        start = 0;
+        speed = 1;
+        holeArray.length = 0;
+        skeletonArray.length = 0;
+        coinArray.length = 0;
+        gameSec = 0;
+        score = 1;
+        missFrame = 0;
+        miss = 0;
+      }
+
+      // button "FullScreen"
+      //document.write('<div><button onclick="goFullScreen()" id="video-fullscreen">FullScreen</button></div>');
+
+      // music http://wrathgames.com/blog [WrathGames Studio]
+      document.write(
+        '<audio autoplay="autoplay" loop="loop"><source src="new_music.ogg" type="audio/ogg"><source src="new_music.mp3" type="audio/mpeg"></audio>'
+      );
+      document.write(
+        '<audio id="shot"><source src="shot2.ogg" type="audio/ogg"><source src="shot.mp3" type="audio/mpeg"></audio>'
+      );
+      document.write(
+        '<audio id="coin"><source src="coin.ogg" type="audio/ogg"><source src="coin.mp3" type="audio/mpeg"></audio>'
+      );
+
+      function playPause() {
+        var song = document.getElementsByTagName("audio")[1];
+        if (song) {
+          song.play();
+        }
+      }
+
+      // keyboard controlers
+      document.addEventListener(
+        "keyup",
+        function (e) {
+          if (e.keyCode == 70) {
+            // lowercase "f" shortcut FullScreen
+            goFullScreen();
+          }
+          if (e.keyCode == 32) {
+            // Spacebar (jump)
+            if (start == 1) {
+              skaterSTATE = 0;
+            }
+          }
+          if (e.keyCode == 16 && skaterSTATE == 1 && reloading == 0) {
+            // Shift (shot)
+            if (start == 1) {
+              skaterSTATE = 2;
+              reloading = 1;
+              killSkeleton();
+              playPause();
+            }
+          }
+          if (e.keyCode == 37) {
+            // left arrow
+            //alert('You clicked LEFT Arrow!');
+            if (start == 0) {
+              levelDown();
+            }
+          }
+          if (e.keyCode == 38) {
+            // up arrow
+            //alert('You clicked UP Arrow!');
+            if (start == 0) {
+              levelUp();
+            }
+          }
+          if (e.keyCode == 39) {
+            // right arrow
+            //alert('You clicked RIGHT Arrow!');
+            if (start == 0) {
+              levelUp();
+            }
+          }
+          if (e.keyCode == 40) {
+            // down arrow
+            if (start == 0) {
+              levelDown();
+            }
+          }
+          if (e.keyCode == 13) {
+            // enter
+            start = 1;
+          }
+        },
+        false
+      );
+
+      // FullScreen Mode
+      function goFullScreen() {
+        var elem = document.getElementById("myCanvas");
+        if (elem.requestFullScreen) {
+          elem.requestFullScreen();
+        } else if (elem.mozRequestFullScreen) {
+          elem.mozRequestFullScreen();
+        } else if (elem.webkitRequestFullScreen) {
+          elem.webkitRequestFullScreen();
+        }
+      }
+
+      // requestAnim shim layer by Paul Irish
+      window.requestAnimFrame = (function () {
+        return (
+          window.requestAnimationFrame ||
+          window.webkitRequestAnimationFrame ||
+          window.mozRequestAnimationFrame ||
+          window.oRequestAnimationFrame ||
+          window.msRequestAnimationFrame ||
+          function (/* function */ callback, /* DOMElement */ element) {
+            window.setTimeout(callback, 1000 / 60);
+          }
+        );
+      })();
+
+      var canvas, context, music;
+
+      var imgcoin = new Image();
+      imgcoin.src = "coin.png";
+      var imgskeleton = new Image();
+      imgskeleton.src = "skeleton.png";
+      var imghole = new Image();
+      imghole.src = "hole.png";
+      var imgskater = new Image();
+      imgskater.src = "skater.png";
+      var imgfront = new Image();
+      imgfront.src = "front.png";
+      var imgblackBkgd = new Image();
+      imgblackBkgd.src = "blackBkgd.png";
+      var imgCloud = new Image();
+      imgCloud.src = "sky.png";
+
+      imgCloud.onload = function () {
+        init();
+      };
+
+      function init() {
+        canvas = document.createElement("canvas");
+        canvas.setAttribute("id", "myCanvas");
+        canvas.width = 960;
+        canvas.height = 540;
+        canvas.style.background = 'url("sky.png")';
+        canvas.style.backgroundSize = "100%";
+
+        context = canvas.getContext("2d");
+
+        document.body.appendChild(canvas);
+
+        animate();
+      }
+
+      function animate() {
+        requestAnimFrame(animate);
+
+        if (start == 0) {
+          menu();
+        }
+
+        if (start == 1) {
+          draw();
+          gameTimer();
+        }
+      }
+
+      function menu() {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.font = "20px AdvoCut";
+
+        lastScore = sessionStorage.getItem("name");
+        if (lastScore != null) {
+          context.fillText("YOUR LAST SCORE " + lastScore, 480, 60);
+        }
+        context.fillText("NEW GAME", 480, 120);
+        context.fillText("LEVEL OF RANDOMNESS " + level, 480, 150);
+        context.fillText(
+          "*Use arrows to change the level of randomness and press enter.",
+          480,
+          210
+        );
+        context.textAlign = "center";
+        context.fillStyle = "#EEE";
+        //background
+        context.drawImage(imgblackBkgd, xValue, 100);
+        if (xValue <= -canvas.width) {
+          xValue = 0;
+        } else {
+          xValue = xValue - 2;
+        }
+        context.drawImage(imgfront, xFront, 0);
+        if (xFront <= -canvas.width) {
+          xFront = 0;
+        } else {
+          xFront = xFront - 4;
+        }
+
+        //skater
+        context.drawImage(
+          imgskater,
+          spriteX,
+          0,
+          150,
+          200,
+          20,
+          skater_y,
+          150,
+          200
+        );
+
+        if (skaterSTATE == 1) {
+          // normal
+          skater_y = 280;
+          spriteX = 0;
+          skateFrame++;
+          if (skateFrame > 15) {
+            spriteX = 300;
+          }
+          if (skateFrame == 30) {
+            spriteX = 0;
+            skateFrame = 0;
+          }
+        }
+        context.fillText("SPACE BAR - Jumping  |  SHIFT - Shooting", 185, 525);
+      }
+
+      function gameOver() {
+        sessionStorage.setItem("name", score);
+        if (score > hiscore) {
+          hiscore = sessionStorage.getItem("name");
+        }
+        restartGame();
+      }
+      function restartGame() {
+        menu();
+        newGame();
+      }
+
+      function gameOverScreen() {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.font = "20px AdvoCut";
+        context.fillText("GAME OVER", 480, 120);
+        context.fillText("SCORE " + score, 480, 150);
+        context.textAlign = "center";
+        context.fillStyle = "#EEE";
+      }
+
+      var level = 0;
+
+      function levelUp() {
+        if (level < 7) {
+          level++;
+        }
+      }
+      function levelDown() {
+        if (level > 0) {
+          level--;
+        }
+      }
+
+      var hiscore = 0;
+
+      var xValue = 0;
+      var xFront = 0;
+      var skater_y = 280;
+      var ball_dy = 5;
+      var skaterSTATE = 1;
+      var jumpFrame = 0;
+      var shotFrame = 0;
+      var skateFrame = 0;
+      var spriteX = 0;
+      var spriteSkeletonX = 0;
+      var missFrame = 0;
+      var skeletonFrame = 0;
+      var holeArray = new Array();
+      var skeletonArray = new Array();
+      var coinArray = new Array();
+      var reloadingFrame = 0;
+      var reloading = 0;
+
+      function draw() {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        context.drawImage(imgblackBkgd, xValue, 100);
+        xValue = xValue - 2 * speed;
+        if (xValue <= -canvas.width) {
+          xValue = 0;
+        }
+        context.drawImage(imgfront, xFront, 0);
+        xFront = xFront - 4 * speed;
+        if (xFront <= -canvas.width) {
+          xFront = 0;
+        }
+        // holes
+        if (holeArray.length > 0) {
+          for (i = 0; i < holeArray.length; i++) {
+            context.drawImage(imghole, holeArray[i].x, 440);
+            holeArray[i].x = holeArray[i].x - 4 * speed;
+            if (
+              holeArray.length > 0 &&
+              holeArray[i].x < 64 &&
+              holeArray[i].x > -100 &&
+              skaterSTATE == 1
+            ) {
+              gameOver();
+            }
+          }
+        }
+
+        // skeleton
+        if (skeletonArray.length > 0) {
+          for (i = 0; i < skeletonArray.length; i++) {
+            //context.drawImage(imgskeleton,skeletonArray[i].x, 335);
+            context.drawImage(
+              imgskeleton,
+              spriteSkeletonX,
+              0,
+              100,
+              150,
+              skeletonArray[i].x,
+              335,
+              100,
+              150
+            );
+            skeletonFrame++;
+            if (skeletonFrame == 60) {
+              skeletonArray[0].x = skeletonArray[0].x - 10;
+              spriteSkeletonX = 100;
+            }
+            if (skeletonFrame == 120) {
+              skeletonArray[0].x = skeletonArray[0].x - 10;
+              spriteSkeletonX = 0;
+              skeletonFrame = 0;
+            }
+            skeletonArray[i].x -= 4 * speed;
+            if (skeletonArray[i].x < -250) {
+              skeletonArray.splice(i, 1);
+            }
+            if (
+              skeletonArray[i].x < 76 &&
+              skeletonArray[i].x > -100 &&
+              skaterSTATE == 1
+            ) {
+              gameOver();
+            }
+            //skeleton colision
+            //if (skeletonArray[i].x < 60 && skeletonArray[i].x > -40 && skaterSTATE == 0 && skater_y > 220) {
+            //gameOver();
+            //}
+          }
+        }
+
+        //coin
+        if (coinArray.length > 0) {
+          for (i = 0; i < coinArray.length; i++) {
+            context.drawImage(imgcoin, coinArray[i].x, 335);
+            coinArray[i].x -= 4 * speed;
+            if (
+              coinArray.length > 0 &&
+              coinArray[i].x < 64 &&
+              coinArray[i].x > -100 &&
+              skaterSTATE == 1
+            ) {
+              collectCoin();
+            }
+          }
+        }
+
+        //skater
+        context.drawImage(
+          imgskater,
+          spriteX,
+          0,
+          150,
+          200,
+          20,
+          skater_y,
+          150,
+          200
+        );
+
+        if (skaterSTATE == 2) {
+          // shot
+          spriteX = 150;
+          shotFrame++;
+        }
+        if (shotFrame == 10) {
+          skaterSTATE = 1;
+          shotFrame = 0;
+        }
+        if (reloading == 1) {
+          reloadingFrame++;
+          context.fillText("RELOADING...", 40, skater_y);
+        }
+        if (reloadingFrame == 60) {
+          reloadingFrame = 0;
+          reloading = 0;
+        }
+
+        if (skaterSTATE == 1) {
+          // normal
+          skater_y = 280;
+          spriteX = 0;
+          skateFrame++;
+          if (skateFrame > 15) {
+            spriteX = 300;
+          }
+          if (skateFrame == 30) {
+            spriteX = 0;
+            skateFrame = 0;
+          }
+        }
+
+        if (skaterSTATE == 0) {
+          // jump
+          jumpFrame++;
+          if (skater_y + ball_dy > 280 || skater_y + ball_dy < 155) {
+            ball_dy = -ball_dy; // negative number
+          }
+          skater_y += ball_dy;
+
+          if (jumpFrame >= 1 && jumpFrame <= 25) {
+            spriteX = 450;
+          }
+          if (jumpFrame >= 26 && jumpFrame <= 60) {
+            spriteX = 600;
+          }
+          if (jumpFrame == 50) {
+            skaterSTATE = 1;
+            jumpFrame = 0;
+          }
+        }
+        if (miss == 1 && skeletonArray[0] && skeletonArray[0].x < 960) {
+          missFrame++;
+          context.fillText("MISSED", skeletonArray[0].x + 20, 330);
+        }
+        if (skeletonArray[0] && skeletonArray[0].x > 960) {
+          miss = 0;
+          missFrame = 30;
+        }
+
+        if (missFrame == 30) {
+          missFrame = 0;
+          miss = 0;
+        }
+
+        context.font = "20px AdvoCut";
+        context.textAlign = "left";
+        context.fillText("SCORE " + score, 10, 20);
+        context.fillText("HISCORE " + hiscore, 150, 20);
+        context.fillText("LEVEL OF RANDOMNESS " + level, 350, 20);
+        context.fillStyle = "#EEE";
+      }
+    </script>
+  </body>
 </html>
